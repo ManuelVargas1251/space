@@ -1,6 +1,6 @@
 # three
 
-http://mnl.space/three
+http://mnl.space/space
 
 
 ## chart
@@ -53,5 +53,4 @@ flowchart LR
 ## references
 - https://threejs.org/manual/#creating-a-scene
 - https://threejs.org/docs/#SphereGeometry
-- https://en.wikipedia.org/wiki/Noli_me_tangere
 - https://threejs.org/manual/#creating-text
