@@ -2,9 +2,9 @@
 import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { CSS3DRenderer, CSS3DObject } from 'three/addons/renderers/CSS3DRenderer.js';
-import { createDust } from './dust.js';
+// import { createDust } from './dust.js';
 import { createStarfield } from './starfield.js';
-import { createSuperclusters } from './superclusters.js';
+// import { createSuperclusters } from './superclusters.js';
 
 // Configuration & Constants
 const REVEAL_SPEED = 0.03;  // Drag sensitivity
