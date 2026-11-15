@@ -2,11 +2,17 @@
 import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { CSS3DRenderer, CSS3DObject } from 'three/addons/renderers/CSS3DRenderer.js';
+import { createDust } from './dust.js';
+import { createStarfield } from './starfield.js';
+import { createSuperclusters } from './superclusters.js';
 
 // Configuration & Constants
 const REVEAL_SPEED = 0.03;  // Drag sensitivity
 const DECAY_SPEED = 0.016;  // Speed at which wireframe fades back to solid
 const MATERIAL_COLOR = 0x00ff99;
+const ENABLE_DUST = false;
+const ENABLE_STARFIELD = true;
+const ENABLE_SUPERCLUSTERS = false;
 
 // Scene, Camera, Renderers
 const container = document.getElementById('canvas') || document.body;
@@ -40,6 +46,24 @@ document.body.appendChild(cssRenderer.domElement);
 // add Orbit Controls (Works with Touch/Mobile Gestures)
 const controls = new OrbitControls(camera, renderer.domElement);
 controls.enableDamping = true;  // Enable smooth damping (inertia) for orbit controls
+
+function randomDirection() {
+  const y = Math.random() * 2 - 1;
+  const angle = Math.random() * Math.PI * 2;
+  const radius = Math.sqrt(1 - y * y);
+  return new THREE.Vector3(Math.cos(angle) * radius, y, Math.sin(angle) * radius);
+}
+
+// Camera-centered background layers stay within the far clipping plane while zooming.
+const dustGroup = ENABLE_DUST ? createDust(randomDirection) : null;
+const starfieldGroup = ENABLE_STARFIELD ? createStarfield(randomDirection) : null;
+const superclusters = ENABLE_SUPERCLUSTERS ? createSuperclusters() : null;
+if (dustGroup) scene.add(dustGroup);
+if (starfieldGroup) scene.add(starfieldGroup);
+if (superclusters) {
+  scene.add(superclusters.group, superclusters.featuredGroup);
+  superclusters.frame(camera);
+}
 
 // Geometry & Meshes
 const geometry = new THREE.IcosahedronGeometry(1.1, 2);
@@ -129,6 +153,7 @@ renderer.domElement.addEventListener('pointermove', (event) => {
 window.addEventListener('resize', () => {
   camera.aspect = window.innerWidth / window.innerHeight;
   camera.updateProjectionMatrix();
+  if (superclusters) superclusters.frame(camera);
 
   renderer.setSize(window.innerWidth, window.innerHeight);
   renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
@@ -136,8 +161,12 @@ window.addEventListener('resize', () => {
 });
 
 // Animation Loop
+let previousFrameTime = performance.now();
 function animate() {
   requestAnimationFrame(animate);
+  const now = performance.now();
+  const delta = Math.min((now - previousFrameTime) / 1000, 0.1);
+  previousFrameTime = now;
 
   // Decay progress back to solid when user isn't dragging
   if (!isDragging && dragProgress > 0) {
@@ -163,6 +192,21 @@ function animate() {
   TextObject.rotation.y += 0.02;
 
   controls.update();
+
+  if (dustGroup) {
+    dustGroup.position.copy(camera.position);
+    dustGroup.rotation.z += 0.002 * delta;
+  }
+  if (starfieldGroup) {
+    starfieldGroup.position.copy(camera.position);
+    starfieldGroup.rotation.y += 0.006 * delta;
+  }
+  if (superclusters) {
+    superclusters.group.position.copy(camera.position);
+    superclusters.group.rotation.x -= 0.012 * delta;
+    superclusters.featuredGroup.position.copy(camera.position);
+    superclusters.featuredGroup.quaternion.copy(camera.quaternion);
+  }
 
   renderer.render(scene, camera);
   cssRenderer.render(scene, camera);
